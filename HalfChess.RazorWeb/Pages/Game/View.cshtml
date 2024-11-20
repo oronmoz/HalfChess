@@ -1,0 +1,111 @@
+@page "{gameId}"
+@model HalfChess.RazorWeb.Pages.Game.ViewModel
+@{
+    ViewData["Title"] = "Game Viewer";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Game #@Model.GameId</h3>
+                    <div class="game-status">
+                        <span class="badge @Model.StatusBadgeClass">@Model.GameStatus</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chess-board" id="chessBoard">
+                        @* Board will be rendered via JavaScript *@
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Game Information
+                </div>
+                <div class="card-body">
+                    <p><strong>Start Time:</strong> @Model.StartTime.ToLocalTime()</p>
+                    <p><strong>White Player:</strong> @Model.WhitePlayerName</p>
+                    <p><strong>Black Player:</strong> Server</p>
+                    <p><strong>Time per Move:</strong> @Model.TimePerMove seconds</p>
+                    @if (Model.IsActive)
+                    {
+                    <p><strong>Current Turn:</strong> <span id="currentTurn">@Model.CurrentTurn</span></p>
+                    <p><strong>Time Remaining:</strong> <span id="timeRemaining">@Model.TimeRemaining</span></p>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Move History
+                </div>
+                <div class="card-body">
+                    <div class="move-list" id="moveList">
+                        @foreach (var move in Model.Moves)
+                        {
+                        <div class="move-item">
+                            <span class="move-number">@move.MoveNumber.</span>
+                            <span class="move-notation">@move.Notation</span>
+                            <span class="move-time">(@move.Timestamp.ToLocalTime().ToString("HH:mm:ss"))</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/chessboard.js"></script>
+    <script>
+        const gameHub = new signalR.HubConnectionBuilder()
+            .withUrl("/gameHub")
+            .build();
+
+        let board;
+
+        gameHub.on("UpdateBoard", (boardState) => {
+            board.setPosition(boardState);
+            updateGameInfo();
+        });
+
+        gameHub.on("GameStateChanged", (state) => {
+            document.querySelector('#gameStatus').textContent = state;
+            if (state !== 'InProgress' && state !== 'Check') {
+                gameHub.stop();
+            }
+        });
+
+        async function initializeBoard() {
+            board = new ChessBoard('chessBoard', {
+                position: '@Model.InitialPosition',
+                orientation: '@Model.PlayerColor',
+                showNotation: true,
+                draggable: false
+            });
+
+            await gameHub.start();
+            await gameHub.invoke("JoinGame", "@Model.GameId");
+        }
+
+        function updateGameInfo() {
+            const timeRemaining = document.querySelector('#timeRemaining');
+            const currentTurn = document.querySelector('#currentTurn');
+
+            fetch(`/api/game/@Model.GameId/state`)
+                .then(response => response.json())
+                .then(data => {
+                    timeRemaining.textContent = data.timeRemaining;
+                    currentTurn.textContent = data.currentTurn;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeBoard);
+    </script>
+}

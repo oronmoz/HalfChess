@@ -1,0 +1,52 @@
+@page
+@model HalfChess.RazorWeb.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Player Registration";
+}
+
+<div class="container mt-4">
+    <h2>Player Registration</h2>
+
+    <form method="post" class="col-md-6">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Input.FirstName" class="form-label"></label>
+            <input asp-for="Input.FirstName" class="form-control" />
+            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.LastName" class="form-label"></label>
+            <input asp-for="Input.LastName" class="form-control" />
+            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.PlayerId" class="form-label">Player ID (1-1000)</label>
+            <input asp-for="Input.PlayerId" class="form-control" />
+            <span asp-validation-for="Input.PlayerId" class="text-danger"></span>
+            <small class="form-text text-muted">Choose a number between 1 and 1000. This ID must be unique.</small>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.PhoneNumber" class="form-label"></label>
+            <input asp-for="Input.PhoneNumber" class="form-control" />
+            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Country" class="form-label"></label>
+            <select asp-for="Input.Country" class="form-select" asp-items="Model.Countries">
+                <option value="">Select a country</option>
+            </select>
+            <span asp-validation-for="Input.Country" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

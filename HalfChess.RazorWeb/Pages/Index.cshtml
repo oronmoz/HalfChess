@@ -1,0 +1,64 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Half Chess - Home";
+}
+
+<div class="container mt-4">
+    <div class="text-center">
+        <h1 class="display-4">Welcome to Half Chess</h1>
+        <p class="lead">Play chess on a unique 8x4 board against our AI opponent!</p>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">New Player?</h5>
+                    <p class="card-text">Register to start playing and track your games.</p>
+                    <a href="/Register" class="btn btn-primary">Register Now</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Already Registered?</h5>
+                    <p class="card-text">View your game history and statistics.</p>
+                    <form method="get" action="/GameDashboard">
+                        <div class="input-group">
+                            <input type="number" class="form-control"
+                                   name="playerId" placeholder="Enter Player ID"
+                                   min="1" max="1000" required>
+                            <button type="submit" class="btn btn-primary">Go to Dashboard</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">How to Play</h5>
+                    <p class="card-text">
+                        Half Chess is played on a unique 8x4 board, using the right half of a traditional chess board.
+                        Each player has:
+                    </p>
+                    <ul>
+                        <li>1 King</li>
+                        <li>1 Bishop</li>
+                        <li>1 Knight</li>
+                        <li>1 Rook</li>
+                        <li>4 Pawns</li>
+                    </ul>
+                    <p class="card-text">
+                        Special rule: Pawns can move one square horizontally (left or right) if the square is empty.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

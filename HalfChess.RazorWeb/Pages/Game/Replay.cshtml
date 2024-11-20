@@ -1,0 +1,169 @@
+@page "{gameId}"
+@model HalfChess.RazorWeb.Pages.Game.ReplayModel
+@{
+    ViewData["Title"] = "Game Replay";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Game Replay #@Model.GameId</h3>
+                    <div>
+                        <span class="badge @Model.ResultBadgeClass">@Model.GameResult</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chess-board" id="chessBoard"></div>
+                    <div class="mt-3 d-flex justify-content-center">
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="btnStart">
+                                <i class="bi bi-skip-start-fill"></i>
+                            </button>
+                            <button class="btn btn-secondary" id="btnPrev">
+                                <i class="bi bi-skip-backward-fill"></i>
+                            </button>
+                            <button class="btn btn-primary" id="btnPlayPause">
+                                <i class="bi bi-play-fill" id="playPauseIcon"></i>
+                            </button>
+                            <button class="btn btn-secondary" id="btnNext">
+                                <i class="bi bi-skip-forward-fill"></i>
+                            </button>
+                            <button class="btn btn-secondary" id="btnEnd">
+                                <i class="bi bi-skip-end-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Game Information
+                </div>
+                <div class="card-body">
+                    <p><strong>Date:</strong> @Model.GameDate.ToLocalTime().ToString("g")</p>
+                    <p><strong>White Player:</strong> @Model.WhitePlayerName</p>
+                    <p><strong>Black Player:</strong> Server</p>
+                    <p><strong>Duration:</strong> @Model.GameDuration.ToString(@"hh\:mm\:ss")</p>
+                    <p><strong>Result:</strong> @Model.GameResult</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Move History
+                </div>
+                <div class="card-body">
+                    <div class="move-list" id="moveList">
+                        @foreach (var move in Model.Moves)
+                        {
+                        <div class="move-item @(move.IsHighlighted ? "highlighted" : "")"
+                             data-move-index="@move.Index">
+                            <span class="move-number">@move.Number.</span>
+                            <span class="move-notation">@move.Notation</span>
+                            <span class="move-time text-muted">
+                                (@move.Timestamp.ToLocalTime().ToString("HH:mm:ss"))
+                            </span>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/chessboard.js"></script>
+    <script>
+        const gameData = @Json.Serialize(Model.ReplayData);
+        let currentMoveIndex = -1;
+        let isPlaying = false;
+        let playInterval;
+        let board;
+
+        function initializeBoard() {
+            board = new ChessBoard('chessBoard', {
+                position: gameData.initialPosition,
+                showNotation: true,
+                draggable: false
+            });
+
+            setupEventListeners();
+            showMove(0); // Show initial position
+        }
+
+        function setupEventListeners() {
+            document.getElementById('btnStart').addEventListener('click', () => showMove(0));
+            document.getElementById('btnEnd').addEventListener('click', () => showMove(gameData.moves.length - 1));
+            document.getElementById('btnNext').addEventListener('click', () => showMove(currentMoveIndex + 1));
+            document.getElementById('btnPrev').addEventListener('click', () => showMove(currentMoveIndex - 1));
+            document.getElementById('btnPlayPause').addEventListener('click', togglePlayPause);
+
+            // Click on move in move list
+            document.querySelectorAll('.move-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = parseInt(item.dataset.moveIndex);
+                    showMove(index);
+                });
+            });
+        }
+
+        function showMove(index) {
+            if (index < 0 || index >= gameData.moves.length) return;
+
+            stopPlayback();
+            currentMoveIndex = index;
+            board.position(gameData.moves[index].position);
+
+            // Update move list highlighting
+            document.querySelectorAll('.move-item').forEach(item => {
+                item.classList.remove('highlighted');
+                if (parseInt(item.dataset.moveIndex) === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        }
+
+        function togglePlayPause() {
+            const icon = document.getElementById('playPauseIcon');
+            if (isPlaying) {
+                stopPlayback();
+                icon.classList.replace('bi-pause-fill', 'bi-play-fill');
+            } else {
+                startPlayback();
+                icon.classList.replace('bi-play-fill', 'bi-pause-fill');
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function startPlayback() {
+            if (currentMoveIndex >= gameData.moves.length - 1) {
+                currentMoveIndex = -1;
+            }
+            playInterval = setInterval(() => {
+                if (currentMoveIndex < gameData.moves.length - 1) {
+                    showMove(currentMoveIndex + 1);
+                } else {
+                    stopPlayback();
+                }
+            }, 1000); // 1 second between moves
+        }
+
+        function stopPlayback() {
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+                isPlaying = false;
+                document.getElementById('playPauseIcon').classList.replace('bi-pause-fill', 'bi-play-fill');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeBoard);
+    </script>
+}

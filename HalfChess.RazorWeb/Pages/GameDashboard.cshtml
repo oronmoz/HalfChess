@@ -1,0 +1,84 @@
+@page
+@model HalfChess.RazorWeb.Pages.GameDashboardModel
+@{
+    ViewData["Title"] = "Game Dashboard";
+}
+
+<div class="container mt-4">
+    <h2>Game Dashboard</h2>
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Player Info
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.PlayerName</h5>
+                    <p class="card-text">Games Played: @Model.GamesPlayed</p>
+                    <p class="card-text">Wins: @Model.Wins</p>
+                    <p class="card-text">Losses: @Model.Losses</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <h3>Active Games</h3>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Game ID</th>
+                        <th>Start Time</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in Model.ActiveGames)
+                    {
+                        <tr>
+                            <td>@game.GameId</td>
+                            <td>@game.StartTime.ToLocalTime()</td>
+                            <td>@game.State</td>
+                            <td>
+                                <a href="/Game/View/@game.GameId" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            
+            <h3>Game History</h3>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Game ID</th>
+                        <th>Date</th>
+                        <th>Result</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in Model.CompletedGames)
+                    {
+                        <tr>
+                            <td>@game.GameId</td>
+                            <td>@game.StartTime.ToLocalTime()</td>
+                            <td>@game.Result</td>
+                            <td>
+                                <a href="/Game/Replay/@game.GameId" class="btn btn-sm btn-info">Replay</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
