@@ -10,7 +10,7 @@ namespace HalfChess.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<GameService> _logger;
-        private const string BaseUrl = "api/game";
+        private const string BaseUrl = "game";
 
         public GameService(HttpClient httpClient, ILogger<GameService> logger)
         {

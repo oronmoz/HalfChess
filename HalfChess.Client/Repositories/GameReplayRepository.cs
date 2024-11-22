@@ -19,6 +19,19 @@ namespace HalfChess.Client.Repositories
             _logger = logger;
         }
 
+        public async Task SaveGameStart(Guid gameId)
+        {
+            var game = new ClientGame
+            {
+                GameId = gameId,
+                GameDate = DateTime.UtcNow,
+                Result = "In Progress"
+            };
+
+            _context.Games.Add(game);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task SaveMove(Guid gameId, Move move)
         {
             try

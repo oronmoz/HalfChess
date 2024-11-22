@@ -12,6 +12,8 @@ namespace HalfChess.Core.Interfaces
         Task SaveMove(Guid gameId, Move move);
         Task<IEnumerable<Move>> GetMoves(Guid gameId);
         Task<IEnumerable<GameReplaySummary>> GetGameReplays();
+
+        Task SaveGameStart(Guid gameId);
     }
 
     public class GameReplaySummary

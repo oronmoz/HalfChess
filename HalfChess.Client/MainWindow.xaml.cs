@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -8,6 +9,7 @@ using HalfChess.Client.Services;
 using HalfChess.Client.ViewModels;
 using HalfChess.Client.Views;
 using HalfChess.Core.Interfaces;
+using HalfChess.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,48 +24,21 @@ namespace HalfChess.Client
         private readonly SolidColorBrush lightSquareColor = new(Colors.White);
         private readonly SolidColorBrush darkSquareColor = new(Colors.LightGray);
 
-        public MainWindow()
+        public MainWindow(
+        GameViewModel gameViewModel,
+        IGameService gameService,
+        IServiceProvider serviceProvider)
         {
             InitializeComponent();
 
-            // Setup services
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            _serviceProvider = services.BuildServiceProvider();
-
-            // Initialize services
-            _gameService = _serviceProvider.GetRequiredService<IGameService>();
-            _gameViewModel = _serviceProvider.GetRequiredService<GameViewModel>();
+            _gameViewModel = gameViewModel;
+            _gameService = gameService;
+            _serviceProvider = serviceProvider;
 
             // Set DataContext
             DataContext = _gameViewModel;
 
             InitializeChessBoard();
-        }
-
-        private void ConfigureServices(IServiceCollection services)
-        {
-            // Register HttpClient services
-            services.AddHttpClient<IGameService, GameService>(client =>
-            {
-                client.BaseAddress = new Uri("https://localhost:7001/api/");
-            });
-
-            // Register DbContext
-            services.AddDbContext<GameReplayContext>(options =>
-                options.UseSqlite(
-                    "Data Source=GameReplay.db",
-                    b => b.MigrationsAssembly("HalfChess.Client")));
-
-            // Register repositories and view models
-            services.AddSingleton<GameViewModel>();
-            services.AddScoped<IGameReplayRepository, GameReplayRepository>();
-
-            // Add logging
-            services.AddLogging(builder =>
-            {
-                builder.SetMinimumLevel(LogLevel.Information);
-            });
         }
 
         private void InitializeChessBoard()

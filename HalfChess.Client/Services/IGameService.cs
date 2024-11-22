@@ -1,6 +1,8 @@
 using HalfChess.Core.Domain;
 using HalfChess.Core.Domain.Models;
 using HalfChess.Core.Game;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace HalfChess.Client.Services
 {

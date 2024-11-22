@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HalfChess.Client.Repositories;
 using HalfChess.Client.Services;
 using HalfChess.Core.Domain;
 using HalfChess.Core.Game;
 using HalfChess.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Windows.Threading;
 
@@ -11,6 +13,12 @@ namespace HalfChess.Client.ViewModels
 {
     public class GameViewModel : ObservableObject
     {
+
+        private bool _canStartGame = true;
+        private bool _isGameInProgress = false;
+        private readonly ILogger<GameViewModel> _logger;
+
+
         private readonly IGameService _gameService;
         private readonly IGameReplayRepository _replayRepository;
         private readonly DispatcherTimer _refreshTimer;
@@ -28,6 +36,12 @@ namespace HalfChess.Client.ViewModels
         public IAsyncRelayCommand<Move> MakeMoveCommand { get; }
         public IAsyncRelayCommand ResignCommand { get; }
 
+        public bool CanStartGame
+        {
+            get => _canStartGame;
+            private set => SetProperty(ref _canStartGame, value);
+        }
+
         public string StatusMessage
         {
             get => _statusMessage;
@@ -42,7 +56,8 @@ namespace HalfChess.Client.ViewModels
 
         public GameViewModel(
             IGameService gameService,
-            IGameReplayRepository replayRepository)
+            IGameReplayRepository replayRepository,
+            ILogger<GameViewModel> logger)
         {
             _gameService = gameService;
             _replayRepository = replayRepository;
@@ -60,31 +75,64 @@ namespace HalfChess.Client.ViewModels
 
         private async Task StartGame()
         {
+            await StartGameAsync();
+        }
+
+
+        private async Task StartGameAsync()
+        {
             try
             {
+                CanStartGame = false;
+                StatusMessage = "Starting new game...";
+
                 var response = await _gameService.StartGame(new GameStartRequest
                 {
                     PlayerId = App.CurrentPlayerId,
-                    TimePerMove = 60
+                    TimePerMove = 60 // Default time limit
                 });
 
                 GameId = response.GameId;
                 PlayerColor = response.PlayerColor;
-                _boardState = response.InitialBoard;
+                _isGameInProgress = true;
 
-                UpdateBoardDisplay();
+                // Initialize board
+                InitializeBoard(response.InitialBoard);
+
+                // Start state monitoring
                 _refreshTimer.Start();
 
-                StatusMessage = "Game started - " +
-                    (PlayerColor == PieceColor.White ? "Your turn" : "Waiting for opponent");
+                StatusMessage = PlayerColor == PieceColor.White ?
+                    "Your turn" : "Waiting for server's move";
+
+                await _replayRepository.SaveGameStart(GameId.Value);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error starting game: {ex.Message}";
+                StatusMessage = $"Failed to start game: {ex.Message}";
+                CanStartGame = true;
+                _logger.LogError(ex, "Error starting new game");
             }
         }
 
-        private async Task MakeMove(Move? Move)
+        private void InitializeBoard(IReadOnlyBoard initialBoard)
+        {
+            Pieces.Clear();
+
+            // Add pieces to board
+            foreach (var position in initialBoard.GetAllPiecePositions(PieceColor.White)
+                .Concat(initialBoard.GetAllPiecePositions(PieceColor.Black)))
+            {
+                var piece = initialBoard.GetPiece(position);
+                if (piece != null)
+                {
+                    Pieces.Add(new PieceViewModel(piece, position));
+                }
+            }
+        }
+    
+
+    private async Task MakeMove(Move? Move)
         {
             if (Move == null || !GameId.HasValue || !_isPlayerTurn)
                 return;
